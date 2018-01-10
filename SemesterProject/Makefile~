@@ -1,0 +1,25 @@
+all: total_count_comparison.pdf norm_count_comparison.pdf
+
+NYZips:  /data/raw/ZIPcodes/ZIPcodes.gz makeNY.awk
+	gawk -f ./makeNY.awk
+
+311_graffiti: /data/raw/NYC311/311_Service_Requests_from_2010_to_Present.tsv.gz read_311.awk
+	gawk -f ./read_311.awk
+
+population_zips_hist: NYZips
+	gawk -F'|' '{print $$1,$$15}'< NYZips >population_zips_hist
+# create a histogram of zipcode and population, by taking field 1 - the zip, and field 15 - the estimated population
+
+after_school_zips_hist: after_school make_after_school_zips_hist.py
+	python3 ./make_after_school_zips_hist.py
+
+graffiti_zips_hist: 311_graffiti make_graffiti_zips_hist.py
+	python3 ./make_graffiti_zips_hist.py
+
+total_count_comparison.pdf norm_count_comparison.pdf: plot_hists.py population_zips_hist after_school_zips_hist graffiti_zips_hist
+	python3 ./plot_hists.py
+
+clean: 
+	rm  NYzips population_zips_hist 311_graffiti after_school_zips_hist graffiti_zips_hist total_count_comparison.pdf norm_count_comparison.pdf
+
+
